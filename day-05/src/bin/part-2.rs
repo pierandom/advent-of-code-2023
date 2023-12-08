@@ -30,7 +30,7 @@ impl RangeMap {
 
 fn solve(input: &str) -> usize {
     let mut it = input.split("\n\n");
-    let seeds_ranges = parse_seeds(it.next().unwrap());
+    let seeds_ranges = merge_ranges(parse_seeds(it.next().unwrap()));
     let seed_to_soil = parse_range_map(it.next().unwrap());
     let soil_to_fertilizer = parse_range_map(it.next().unwrap());
     let fertilizer_to_water = parse_range_map(it.next().unwrap());
@@ -69,6 +69,22 @@ fn parse_seeds(input: &str) -> Vec<Range<usize>> {
             _ => panic!("Expected tuple of length 2"),
         })
         .collect()
+}
+
+fn merge_ranges(mut ranges: Vec<Range<usize>>) -> Vec<Range<usize>> {
+    let mut result = vec![];
+    ranges.sort_by_key(|range| range.start);
+    let mut curr_range = ranges[0].clone();
+    for range in ranges.iter().skip(1) {
+        if range.start <= curr_range.end {
+            curr_range.end = std::cmp::max(curr_range.end, range.end);
+        } else {
+            result.push(curr_range);
+            curr_range = range.clone();
+        }
+    }
+    result.push(curr_range);
+    result
 }
 
 fn parse_range_map(input: &str) -> RangeMap {
