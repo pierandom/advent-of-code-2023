@@ -9,29 +9,22 @@ fn main() {
 fn solve(input: &str) -> usize {
     let (instructions, map) = input.split_once("\n\n").unwrap();
     let map = parse_map(map);
-    let mut steps = 0;
     let mut states = map
         .keys()
         .filter(|key| key.ends_with('A'))
+        .cloned()
         .collect::<Vec<_>>();
-    for instruction in instructions.chars().cycle() {
-        steps += 1;
-        if instruction == 'L' {
-            for state in states.iter_mut() {
-                let (left, _) = map.get(&state.clone()).unwrap();
-                *state = left;
+    let distances = states.iter_mut().map(|state| {
+        instructions.chars().cycle().position(|c| {
+            if c == 'L' {
+                *state = map[state].0.clone();
+            } else {
+                *state = map[state].1.clone();
             }
-        } else {
-            for state in states.iter_mut() {
-                let (_, right) = map.get(&state.clone()).unwrap();
-                *state = right;
-            }
-        }
-        if states.iter().all(|state| state.ends_with('Z')) {
-            break;
-        }
-    }
-    steps
+            state.ends_with('Z')
+        }).unwrap() + 1
+    }).collect::<Vec<_>>();
+    lcm(&distances)
 }
 
 fn parse_map(input: &str) -> HashMap<String, (String, String)> {
@@ -50,6 +43,18 @@ fn parse_line(input: &str) -> (String, (String, String)) {
     let left = left.strip_prefix('(').unwrap();
     let right = right.strip_suffix(')').unwrap();
     (key.to_string(), (left.to_string(), right.to_string()))
+}
+
+fn lcm(nums: &[usize]) -> usize {
+    nums.iter().fold(1, |acc, x| acc * x / gcd(acc, *x))
+}
+
+fn gcd(a: usize, b: usize) -> usize {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
 }
 
 #[cfg(test)]
